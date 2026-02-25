@@ -1,13 +1,14 @@
 {
     "name": "Controle de Gás",
     "short_name": "Gás",
-    "start_url": "index.html",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#0f172a",
     "icons": [
         {
-            "src": "icon.png",
+            "src": "/icon.png",
             "sizes": "180x180",
             "type": "image/png"
         }
