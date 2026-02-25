@@ -1,0 +1,5 @@
+{
+  "name": "GásControl",
+  "description": "Sistema mobile-first para controle diário de vendas e lucro de revendedores de gás.",
+  "requestFramePermissions": []
+}
