@@ -170,7 +170,8 @@ export default function App() {
     const valorBruto = totalVendas * settings.sellPrice;
     const lucroLiquido = currentSales.reduce((acc, v) => acc + v.profit, 0);
 
-    const detalhes = currentSales.map(v => `
+    const detalhes = currentSales.map((v, i) => `
+VENDA ${i + 1}
 Hora: ${v.time}
 Nome: ${v.nome}
 CPF: ${v.cpf}
@@ -178,6 +179,7 @@ Telefone: ${v.telefone}
 Pagamento: ${v.pagamento}
 Senha: ${v.senha || "-"}
 Vasilhame: ${v.broughtContainer ? "Sim" : "Não"}
+Valor Venda: R$ ${settings.sellPrice.toFixed(2)}
 Lucro: R$ ${v.profit.toFixed(2)}
 --------------------------`).join("");
 
