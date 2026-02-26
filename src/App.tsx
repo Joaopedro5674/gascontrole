@@ -176,7 +176,7 @@ Hora: ${v.time}
 Nome: ${v.nome}
 CPF: ${v.cpf}
 Telefone: ${v.telefone}
-Pagamento: ${v.pagamento}
+Forma de Pagamento: ${v.pagamento}
 Senha: ${v.senha || "-"}
 Vasilhame: ${v.broughtContainer ? "Sim" : "Não"}
 Valor Venda: R$ ${settings.sellPrice.toFixed(2)}
@@ -313,7 +313,7 @@ Lucro: R$ ${v.profit.toFixed(2)}
       nome: '',
       cpf: '',
       telefone: '',
-      pagamento: 'Dinheiro',
+      pagamento: 'Cartão - Senha',
       senha: ''
     });
 
@@ -386,16 +386,16 @@ Lucro: R$ ${v.profit.toFixed(2)}
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Pagamento</label>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Forma de Pagamento</label>
             <select
               name="pagamento"
               value={formData.pagamento}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-zinc-100 rounded-xl font-medium focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
             >
-              <option value="Dinheiro">Dinheiro</option>
-              <option value="PIX">PIX</option>
-              <option value="Cartão">Cartão</option>
+              <option value="Cartão - Senha">Cartão - Senha</option>
+              <option value="Cartão - SMS">Cartão - SMS</option>
+              <option value="Cartão - Aproximação">Cartão - Aproximação</option>
             </select>
           </div>
           <div>
@@ -528,7 +528,7 @@ Lucro: R$ ${v.profit.toFixed(2)}
                       <span className="font-bold">{sale.telefone || "-"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Pagamento:</span>
+                      <span className="text-zinc-500">Forma de Pagamento:</span>
                       <span className="font-bold">{sale.pagamento}</span>
                     </div>
                     <div className="flex justify-between">
