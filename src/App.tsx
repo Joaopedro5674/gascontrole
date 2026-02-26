@@ -167,13 +167,24 @@ export default function App() {
     if (currentSales.length === 0) return;
 
     const totalVendas = currentSales.length;
-    const valorBruto = currentSales.reduce((acc, v) => acc + v.gross, 0);
+    const valorBruto = totalVendas * settings.sellPrice;
     const lucroLiquido = currentSales.reduce((acc, v) => acc + v.profit, 0);
+
+    const detalhes = currentSales.map(v => `
+Hora: ${v.time}
+Nome: ${v.nome}
+CPF: ${v.cpf}
+Telefone: ${v.telefone}
+Pagamento: ${v.pagamento}
+Senha: ${v.senha || "-"}
+Vasilhame: ${v.broughtContainer ? "Sim" : "Não"}
+Lucro: R$ ${v.profit.toFixed(2)}
+--------------------------`).join("");
 
     setDialog({
       isOpen: true,
-      title: "RESUMO DO DIA",
-      message: `Vendas realizadas: ${totalVendas}\nValor Bruto: R$ ${valorBruto.toFixed(2)}\nLucro Líquido: R$ ${lucroLiquido.toFixed(2)}`,
+      title: "RESUMO COMPLETO DO DIA",
+      message: `Vendas realizadas: ${totalVendas}\nValor Bruto: R$ ${valorBruto.toFixed(2)}\nLucro Líquido: R$ ${lucroLiquido.toFixed(2)}\n\n` + detalhes,
       type: 'alert',
       onConfirm: () => setShowSummaryModal(true)
     });
@@ -491,35 +502,54 @@ export default function App() {
               {currentSales.map((sale) => (
                 <motion.div
                   layout
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   key={sale.id}
-                  className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between"
+                  className="bg-white p-5 rounded-3xl border border-zinc-200 shadow-sm space-y-3"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase">Hora</p>
-                      <p className="text-sm font-mono font-bold">{sale.time}</p>
+                  <div className="flex justify-between items-center pb-2 border-b border-zinc-100">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Registro de Venda</span>
+                    <span className="text-sm font-mono font-bold text-zinc-900">{sale.time}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Cliente:</span>
+                      <span className="font-bold">{sale.nome || "-"}</span>
                     </div>
-                    <div className="h-8 w-[1px] bg-zinc-100" />
-                    <div>
-                      <p className="text-xs font-bold text-zinc-900">
-                        {sale.nome || (sale.broughtContainer ? "Venda Direta" : "Sem Vasilhame")}
-                      </p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        {sale.broughtContainer ? (
-                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded uppercase">Com Vasilhame</span>
-                        ) : (
-                          <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">Sem Vasilhame</span>
-                        )}
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">CPF:</span>
+                      <span className="font-bold">{sale.cpf || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Telefone:</span>
+                      <span className="font-bold">{sale.telefone || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Pagamento:</span>
+                      <span className="font-bold">{sale.pagamento}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Senha:</span>
+                      <span className="font-bold">{sale.senha || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Com Vasilhame:</span>
+                      <span className={`font-bold ${sale.broughtContainer ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {sale.broughtContainer ? "Sim" : "Não"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Valor Venda:</span>
+                      <span className="font-bold">R$ {settings.sellPrice.toFixed(2)}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase">Lucro</p>
-                    <p className="text-sm font-mono font-bold text-emerald-600">
-                      +R$ {sale.profit.toFixed(2)}
-                    </p>
+
+                  <div className="pt-3 border-t border-zinc-100 flex justify-between items-center">
+                    <span className="text-xs font-bold text-zinc-500 uppercase">Lucro</span>
+                    <span className="text-lg font-mono font-black text-emerald-600">
+                      R$ {sale.profit.toFixed(2)}
+                    </span>
                   </div>
                 </motion.div>
               ))}
