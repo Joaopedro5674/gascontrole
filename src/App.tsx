@@ -4,14 +4,14 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Plus, 
-  Settings, 
-  Trash2, 
-  CheckCircle2, 
-  XCircle, 
-  TrendingUp, 
-  Package, 
+import {
+  Plus,
+  Settings,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  Package,
   DollarSign,
   History,
   AlertTriangle,
@@ -25,7 +25,11 @@ interface Sale {
   id: string;
   time: string;
   broughtContainer: boolean;
-  identification?: string;
+  nome: string;
+  cpf: string;
+  telefone: string;
+  pagamento: string;
+  senha: string;
   profit: number;
   gross: number;
 }
@@ -42,7 +46,7 @@ interface DayData {
 // --- Constants ---
 
 const STORAGE_KEY_SETTINGS = 'gas_control_settings';
-const STORAGE_KEY_SALES = 'gas_control_sales';
+const STORAGE_KEY_SALES = 'vendasDia'; // Changed as requested
 
 export default function App() {
   // --- State ---
@@ -59,7 +63,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-  
+
   // Custom Alert/Confirm State
   const [dialog, setDialog] = useState<{
     isOpen: boolean;
@@ -73,12 +77,11 @@ export default function App() {
     message: '',
     type: 'alert'
   });
-  
+
   // New Sale Flow State
   const [step, setStep] = useState(1); // 1: Brought Container?, 2: Identification
-  const [newSaleData, setNewSaleData] = useState<{ broughtContainer: boolean; identification: string }>({
+  const [vendaTemp, setVendaTemp] = useState<Partial<Sale>>({
     broughtContainer: true,
-    identification: ''
   });
 
   // --- Helpers ---
@@ -127,21 +130,26 @@ export default function App() {
       return;
     }
     setStep(1);
-    setNewSaleData({ broughtContainer: true, identification: '' });
+    setVendaTemp({ broughtContainer: true });
     setShowSaleModal(true);
   };
 
-  const confirmSale = (finalIdentification?: string) => {
+  const confirmSale = (finalData: Partial<Sale>) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
+
     const profit = settings.sellPrice - settings.buyPrice;
-    
+    const fullSaleData = { ...vendaTemp, ...finalData };
+
     const newSale: Sale = {
       id: crypto.randomUUID(),
       time: timeStr,
-      broughtContainer: newSaleData.broughtContainer,
-      identification: finalIdentification || newSaleData.identification,
+      broughtContainer: fullSaleData.broughtContainer || false,
+      nome: fullSaleData.nome || '',
+      cpf: fullSaleData.cpf || '',
+      telefone: fullSaleData.telefone || '',
+      pagamento: fullSaleData.pagamento || '',
+      senha: fullSaleData.senha || '',
       profit: profit,
       gross: settings.sellPrice
     };
@@ -151,12 +159,13 @@ export default function App() {
       [today]: [newSale, ...(prev[today] || [])]
     }));
 
+    setVendaTemp({ broughtContainer: true });
     setShowSaleModal(false);
   };
 
   const closeDay = () => {
     if (currentSales.length === 0) return;
-    
+
     const totalVendas = currentSales.length;
     const valorBruto = currentSales.reduce((acc, v) => acc + v.gross, 0);
     const lucroLiquido = currentSales.reduce((acc, v) => acc + v.profit, 0);
@@ -196,16 +205,16 @@ export default function App() {
       onConfirm: () => {
         // 1. Limpa o armazenamento físico
         localStorage.clear();
-        
+
         // 2. Limpa o estado do React para feedback visual imediato
         setAllSales({});
         setSettings({ buyPrice: 0, sellPrice: 0 });
-        
+
         // 3. Fecha qualquer interface aberta
         setShowSettings(false);
         setShowSaleModal(false);
         setShowSummaryModal(false);
-        
+
         // 4. Recarrega a aplicação para garantir um estado totalmente limpo
         window.location.href = window.location.href;
       }
@@ -218,7 +227,7 @@ export default function App() {
     <AnimatePresence>
       {isOpen && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -250,8 +259,8 @@ export default function App() {
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Valor de Compra (Custo)</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-mono">R$</span>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={localBuy || ''}
                 onChange={(e) => setLocalBuy(Number(e.target.value))}
                 className="w-full pl-12 pr-4 py-4 bg-zinc-100 rounded-2xl font-mono text-lg focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
@@ -263,8 +272,8 @@ export default function App() {
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Valor de Venda</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-mono">R$</span>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={localSell || ''}
                 onChange={(e) => setLocalSell(Number(e.target.value))}
                 className="w-full pl-12 pr-4 py-4 bg-zinc-100 rounded-2xl font-mono text-lg focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
@@ -273,7 +282,7 @@ export default function App() {
             </div>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => {
             setSettings({ buyPrice: localBuy, sellPrice: localSell });
             setShowSettings(false);
@@ -287,26 +296,32 @@ export default function App() {
   };
 
   const SaleContent = () => {
-    const [localId, setLocalId] = useState(newSaleData.identification);
+    const [formData, setFormData] = useState({
+      nome: '',
+      cpf: '',
+      telefone: '',
+      pagamento: 'Dinheiro',
+      senha: ''
+    });
 
     if (step === 1) {
       return (
         <div className="space-y-6">
           <p className="text-center text-zinc-600 font-medium">O cliente trouxe o vasilhame?</p>
           <div className="grid grid-cols-2 gap-4">
-            <button 
+            <button
               onClick={() => {
-                setNewSaleData(d => ({ ...d, broughtContainer: true }));
-                confirmSale();
+                setVendaTemp(d => ({ ...d, broughtContainer: true }));
+                setStep(2);
               }}
               className="flex flex-col items-center gap-3 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-3xl active:scale-95 transition-transform"
             >
               <CheckCircle2 size={40} className="text-emerald-500" />
               <span className="font-bold text-emerald-700">SIM</span>
             </button>
-            <button 
+            <button
               onClick={() => {
-                setNewSaleData(d => ({ ...d, broughtContainer: false }));
+                setVendaTemp(d => ({ ...d, broughtContainer: false }));
                 setStep(2);
               }}
               className="flex flex-col items-center gap-3 p-6 bg-amber-50 border-2 border-amber-200 rounded-3xl active:scale-95 transition-transform"
@@ -319,28 +334,78 @@ export default function App() {
       );
     }
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
     return (
-      <div className="space-y-6">
-        <div>
-          <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Identificação / Apelido (Opcional)</label>
-          <input 
-            type="text" 
-            autoFocus
-            value={localId}
-            onChange={(e) => setLocalId(e.target.value)}
-            className="w-full px-4 py-4 bg-zinc-100 rounded-2xl font-medium text-lg focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
-            placeholder="Ex: João da Esquina"
-          />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-3">
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Nome</label>
+            <input
+              name="nome"
+              value={formData.nome}
+              onChange={handleChange}
+              placeholder="Digite o nome"
+              className="w-full px-4 py-3 bg-zinc-100 rounded-xl font-medium focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">CPF</label>
+            <input
+              name="cpf"
+              value={formData.cpf}
+              onChange={handleChange}
+              placeholder="000.000.000-00"
+              className="w-full px-4 py-3 bg-zinc-100 rounded-xl font-medium focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Telefone</label>
+            <input
+              name="telefone"
+              value={formData.telefone}
+              onChange={handleChange}
+              placeholder="(00) 00000-0000"
+              className="w-full px-4 py-3 bg-zinc-100 rounded-xl font-medium focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Pagamento</label>
+            <select
+              name="pagamento"
+              value={formData.pagamento}
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-zinc-100 rounded-xl font-medium focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+            >
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="PIX">PIX</option>
+              <option value="Cartão">Cartão</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Senha</label>
+            <input
+              name="senha"
+              type="password"
+              value={formData.senha}
+              onChange={handleChange}
+              placeholder="****"
+              className="w-full px-4 py-3 bg-zinc-100 rounded-xl font-medium focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+            />
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button 
+        <div className="flex gap-3 pt-2">
+          <button
             onClick={() => setStep(1)}
             className="flex-1 py-4 bg-zinc-100 text-zinc-600 rounded-2xl font-bold active:scale-95 transition-transform"
           >
             VOLTAR
           </button>
-          <button 
-            onClick={() => confirmSale(localId)}
+          <button
+            onClick={() => confirmSale(formData)}
             className="flex-[2] py-4 bg-zinc-900 text-white rounded-2xl font-bold active:scale-95 transition-transform"
           >
             CONFIRMAR VENDA
@@ -376,7 +441,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="max-w-md mx-auto pt-24 px-4 space-y-6">
-        
+
         {/* Settings Trigger */}
         <section className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-zinc-200">
           <div className="flex items-center gap-3">
@@ -388,7 +453,7 @@ export default function App() {
               <p className="text-xs text-zinc-500">Preços: R$ {settings.buyPrice} / R$ {settings.sellPrice}</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => setShowSettings(true)}
             className="px-4 py-2 bg-zinc-900 text-white text-xs font-bold rounded-lg active:scale-95 transition-transform"
           >
@@ -398,7 +463,7 @@ export default function App() {
 
         {/* New Sale Button */}
         <section>
-          <button 
+          <button
             onClick={handleAddSale}
             className="w-full py-6 bg-emerald-500 text-white rounded-3xl shadow-xl shadow-emerald-200 flex flex-col items-center justify-center gap-2 active:scale-95 transition-all group"
           >
@@ -424,7 +489,7 @@ export default function App() {
           ) : (
             <div className="space-y-3">
               {currentSales.map((sale) => (
-                <motion.div 
+                <motion.div
                   layout
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -439,7 +504,7 @@ export default function App() {
                     <div className="h-8 w-[1px] bg-zinc-100" />
                     <div>
                       <p className="text-xs font-bold text-zinc-900">
-                        {sale.identification || (sale.broughtContainer ? "Venda Direta" : "Sem Vasilhame")}
+                        {sale.nome || (sale.broughtContainer ? "Venda Direta" : "Sem Vasilhame")}
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
                         {sale.broughtContainer ? (
@@ -464,14 +529,14 @@ export default function App() {
 
         {/* Footer Actions */}
         <section className="grid grid-cols-2 gap-4 pt-4">
-          <button 
+          <button
             onClick={closeDay}
             disabled={currentSales.length === 0}
             className="flex items-center justify-center gap-2 py-4 bg-zinc-200 text-zinc-700 rounded-2xl font-bold text-sm active:scale-95 transition-transform disabled:opacity-50"
           >
             <CheckCircle2 size={18} /> Fechar Dia
           </button>
-          <button 
+          <button
             onClick={resetAll}
             className="flex items-center justify-center gap-2 py-4 bg-red-50 text-red-600 rounded-2xl font-bold text-sm active:scale-95 transition-transform"
           >
@@ -510,15 +575,15 @@ export default function App() {
               <span className="font-mono font-bold text-2xl text-emerald-600">R$ {stats.totalProfit.toFixed(2)}</span>
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-3">
-            <button 
+            <button
               onClick={() => setShowSummaryModal(false)}
               className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold active:scale-95 transition-transform"
             >
               CONCLUÍDO
             </button>
-            <button 
+            <button
               onClick={clearDay}
               className="w-full py-4 text-red-600 font-bold active:scale-95 transition-transform flex items-center justify-center gap-2"
             >
@@ -529,9 +594,9 @@ export default function App() {
       </Modal>
 
       {/* Custom Dialog (Alert/Confirm) */}
-      <Modal 
-        isOpen={dialog.isOpen} 
-        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))} 
+      <Modal
+        isOpen={dialog.isOpen}
+        onClose={() => setDialog(prev => ({ ...prev, isOpen: false }))}
         title={dialog.title}
       >
         <div className="space-y-6">
@@ -540,14 +605,14 @@ export default function App() {
           </p>
           <div className="flex gap-3">
             {dialog.type === 'confirm' && (
-              <button 
+              <button
                 onClick={() => setDialog(prev => ({ ...prev, isOpen: false }))}
                 className="flex-1 py-4 bg-zinc-100 text-zinc-600 rounded-2xl font-bold active:scale-95 transition-transform"
               >
                 CANCELAR
               </button>
             )}
-            <button 
+            <button
               onClick={() => {
                 setDialog(prev => ({ ...prev, isOpen: false }));
                 dialog.onConfirm?.();
